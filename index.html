@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GopherJS + Primitive.lol</title>
+    <style>
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .io {
+            display: flex;
+            flex-direction: row;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+        .controls button {
+            margin: 10px;
+        }
+        .output {
+            width: 256px;
+            height: 256px;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <p><a href="https://github.com/fogleman/primitive">fogleman/primitive</a> compiled from Go to JavaScript using <a href="https://github.com/gopherjs/gopherjs">GopherJS</a></p>
+        <div class="io">
+            <img class="input" src="examples/monalisa.png" width="256" height="256"/>
+            <div class="output"></div>
+        </div>
+        <div class="controls">
+            <button class="start">start</button>
+            <span class="status">step #x</span>
+            <button class="stop">stop</button>
+        </div>
+    </div>
+
+    <script src="main-js.hand.js"></script>
+
+    <script>
+      (function() {
+        const output = document.querySelector('.output');
+        const img = document.querySelector('.input');
+
+        const buttonStart = document.querySelector('.start');
+        const buttonStop = document.querySelector('.stop');
+        const status = document.querySelector('.status');
+
+        let stop = false;
+        let stepCount = 0;
+
+        function toDataUrl(img, outputFormat) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.height = img.height;
+            canvas.width = img.width;
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+            return canvas.toDataURL(outputFormat);
+        }
+
+        const imgEncoded = toDataUrl(img, 'image/jpeg').substr(23);
+
+        function start() {
+          stop = false;
+          stepCount = 0;
+
+          output.innerHTML = primitive.init({
+            image: imgEncoded,
+            primitivesCount: 5,
+            inputSize: img.width < 128 ? img.width : 128,
+            outputSize: img.width,
+            alpha: 128,
+            mode: 1 //0=combo 1=triangle 2=rect 3=ellipse 4=circle 5=rotatedrect 6=beziers 7=rotatedellipse 8=polygon
+          });
+
+          status.innerText = 'step #' + stepCount;
+
+          function step() {
+            if (stop) {
+              return;
+            }
+
+            output.innerHTML = primitive.step();
+            stepCount++;
+            status.innerText = 'step #' + stepCount;
+            requestAnimationFrame(step);
+          }
+
+          setTimeout(step, 100);
+        }
+
+        buttonStart.addEventListener('click', start);
+        buttonStop.addEventListener('click', () => stop = true);
+      })();
+
+    </script>
+</body>
+</html>
